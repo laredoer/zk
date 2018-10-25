@@ -1,6 +1,7 @@
 package zk
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -38,7 +39,17 @@ func (client *ZookeeperClient) Connect() (err error) {
 		}
 		client.conn = conn
 		client.eventChan = eventChan
-		go client.eventWatch()
+		infos, errs := client.eventWatch()
+		go func() {
+			for {
+				select {
+				case info := <-infos:
+					fmt.Println(info)
+				case erros := <-errs:
+					fmt.Println(erros)
+				}
+			}
+		}()
 	}
 	atomic.AddInt32(&client.useCount, 1) //原子操作加一
 	time.Sleep(time.Second)
